@@ -7,7 +7,7 @@ const router = Router();
 router.get("/", async (_req, res) => {
   res.json({
     success: true,
-    services: "auth-service",
+    services: "Blog-Service",
     timestamp: new Date().toISOString(),
   });
 });
