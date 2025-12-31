@@ -5,7 +5,7 @@ import {
   RegisterUserRequestDto,
 } from "../dto/auth.dto.js";
 import { logger } from "../utils/logger.js";
-import { config } from "../config/index.js";
+
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -110,26 +110,26 @@ export class AuthController {
     }
   };
 
-  private setRefreshTokenCookie(res: Response, refreshToken: string) {
-    const isProduction = config.ENV === "production";
+  // private setRefreshTokenCookie(res: Response, refreshToken: string) {
+  //   const isProduction = config.ENV === "production";
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: isProduction, // Only sent over HTTPS in production
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/", // Available on all routes
-      domain: "localhost", // Your domain
-    });
-  }
+  //   res.cookie("refreshToken", refreshToken, {
+  //     httpOnly: true,
+  //     secure: isProduction, // Only sent over HTTPS in production
+  //     sameSite: "strict",
+  //     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  //     path: "/", // Available on all routes
+  //     domain: "localhost", // Your domain
+  //   });
+  // }
 
-  private clearRefreshTokenCookie(res: Response) {
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: config.ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      domain: "localhost",
-    });
-  }
+  // private clearRefreshTokenCookie(res: Response) {
+  //   res.clearCookie("refreshToken", {
+  //     httpOnly: true,
+  //     secure: config.ENV === "production",
+  //     sameSite: "strict",
+  //     path: "/",
+  //     domain: "localhost",
+  //   });
+  // }
 }
