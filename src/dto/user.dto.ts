@@ -2,7 +2,6 @@ import z from "zod";
 import {
   getAllUsersSchema,
   updateUserRequestSchema,
-  updateUserSchema,
   userUUIDSchema,
 } from "../validators/user.validators.js";
 

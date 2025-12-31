@@ -101,7 +101,7 @@ export class AuthService {
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     await redis.set(`password_reset:${hashedToken}`, user.id, "EX", 60 * 15); // 15 minutes expiration
 
-    const resetLink = `${config.FRONTEND_URL}/auth/reset-password?token=${token}`;
+    // const resetLink = `${config.FRONTEND_URL}/auth/reset-password?token=${token}`;
 
     // Send email logic would go here
   }
