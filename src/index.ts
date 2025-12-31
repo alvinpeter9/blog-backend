@@ -35,7 +35,7 @@ app.use((req, _res, next) => {
 });
 
 app.get("/", async (_req, res) => {
-  res.json({ message: "Hello, World!" });
+  res.json({ message: "Hi, welcome to blog service." });
 });
 
 // ROUTES
@@ -59,6 +59,6 @@ process.on("SIGINT", gracefulShutdown);
 
 // Start server
 app.listen(config.PORT, () => {
-  logger.info(`Auth Service running on port ${config.PORT}`);
+  logger.info(`Blog Service running on port ${config.PORT}`);
   logger.info(`Environment: ${config.ENV}`);
 });

@@ -9,7 +9,7 @@ export const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  defaultMeta: { service: "auth-service" },
+  defaultMeta: { service: "blog-service" },
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
