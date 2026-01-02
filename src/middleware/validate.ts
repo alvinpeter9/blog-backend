@@ -1,24 +1,24 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError, ZodType } from "zod";
 import { AppError } from "../utils/app-error.js";
+import { ValidationLocation } from "../types/index.js";
 
-declare global {
-  namespace Express {
-    interface Request {
-      validatedQuery?: any;
-    }
-  }
-}
-
-type Location = "body" | "params" | "query";
+/**
+ * Validation middleware using Zod schemas.
+ * Validates request data in the specified location (body, query, params).
+ * On success, attaches the validated data to the request object.
+ * On failure, passes a validation error to the next middleware.
+ * @param schema - The Zod schema to validate against
+ * @param location - The location of the data to validate (default: "body")
+ */
 
 export const validate =
-  (schema: ZodType, location: Location = "body") =>
+  (schema: ZodType, location: ValidationLocation = "body") =>
   async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const parsed = await schema.parseAsync(req[location]);
       if (location === "query") {
-        req.validatedQuery = parsed; // cannot mutate req.query
+        req.validatedQuery = parsed as Record<string, unknown>; // cannot mutate req.query
       } else {
         req[location] = parsed;
       }

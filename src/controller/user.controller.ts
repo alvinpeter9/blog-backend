@@ -6,7 +6,7 @@ export class UserController {
 
   getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { cursor, pagesize } = req.validatedQuery;
+      const { cursor, pagesize } = req.validatedQuery || {};
       const result = await this.userService.getAllUsers({
         cursor: cursor as string,
         pagesize: Number(pagesize),

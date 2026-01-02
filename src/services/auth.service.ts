@@ -155,7 +155,7 @@ export class AuthService {
       await redis.del(`refresh_token:${payload.userId}`);
 
       return await this.generateTokens(user.id, user.email);
-    } catch (error) {
+    } catch {
       throw new AppError("Invalid refresh token", 401);
     }
   }
@@ -182,8 +182,8 @@ export class AuthService {
         id: payload.userId,
         email: payload.email,
       };
-    } catch (error) {
-      throw new AppError("Invalid token", 401);
+    } catch {
+      throw new AppError("Unauthorized", 401);
     }
   }
 

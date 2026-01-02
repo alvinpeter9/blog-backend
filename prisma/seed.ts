@@ -2,9 +2,10 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/config/generated/client.js";
 import bcrypt from "bcrypt";
+import { logger } from "../src/utils/logger.js";
 
 if (!process.env.DATABASE_URL) {
-  console.error(
+  logger.error(
     "Missing DATABASE_URL in environment (.env). Set DATABASE_URL to your Postgres connection string."
   );
   process.exit(1);
@@ -22,13 +23,12 @@ async function main() {
   if (process.env.NODE_ENV === "production") {
     throw new Error("❌ Seeding is disabled in production");
   }
-
-  console.log("🧹 Cleaning database...");
+  logger.info("🧹 Cleaning database...");
 
   const user = await prisma.user.findFirst();
   const category = await prisma.category.findFirst();
   if (user || category) {
-    console.log("⚠️  Existing data found. Cleaning up...");
+    logger.info("⚠️  Existing data found. Cleaning up...");
     // Order matters due to foreign keys
     await prisma.$transaction([
       prisma.user.deleteMany(),
@@ -36,7 +36,7 @@ async function main() {
     ]);
   }
 
-  console.log("🌱 Seeding database...");
+  logger.info("🌱 Seeding database...");
 
   /* -------------------- USERS -------------------- */
   const passwordHash = await bcrypt.hash("Password123!", 12);
@@ -73,12 +73,14 @@ async function main() {
       data: {
         name: "Business",
         description: "Insights on startups, finance, and entrepreneurship",
+        imageUrl: "https://example.com/images/technology.jpg",
       },
     }),
     prisma.category.create({
       data: {
         name: "Lifestyle",
         description: "Health, productivity, and personal growth",
+        imageUrl: "https://example.com/images/technology.jpg",
       },
     }),
   ]);
@@ -115,12 +117,12 @@ async function main() {
     }),
   ]);
 
-  console.log("✅ Seeding completed successfully");
+  logger.info("✅ Seeding completed successfully");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seeding failed:", e);
+    logger.error("❌ Seeding failed:", e);
     process.exit(1);
   })
   .finally(async () => {

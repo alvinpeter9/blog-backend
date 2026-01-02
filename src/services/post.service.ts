@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js";
 import { Prisma } from "../config/generated/browser.js";
+import { GetCategoryRequestDto } from "../dto/category.dto.js";
 import {
   CreatePostRequestDto,
   DeletePostRequestDto,
@@ -87,9 +88,6 @@ export class PostService {
   }
 
   async getPostById(postId: GetPostRequestDto): Promise<GetPostResponseDto> {
-    if (!postId) {
-      throw new AppError("Post ID is required", 400);
-    }
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
@@ -120,6 +118,43 @@ export class PostService {
       throw new AppError("Post not found", 404);
     }
     return post;
+  }
+
+  async getPostsByCategoryId(
+    categoryId: GetCategoryRequestDto
+  ): Promise<GetPostResponseDto[]> {
+    const posts = await prisma.post.findMany({
+      where: {
+        categoryId,
+      },
+      select: {
+        id: true,
+        title: true,
+        published: true,
+        content: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        updatedAt: true,
+      },
+    });
+
+    if (!posts || posts.length === 0) {
+      throw new AppError("No posts found for this category", 404);
+    }
+    return posts;
   }
 
   async createPost(postData: CreatePostRequestDto): Promise<PostResponseDto> {
@@ -166,9 +201,11 @@ export class PostService {
     const post = await prisma.post.findUnique({
       where: { id: postData.postId },
     });
+
     if (!post) {
       throw new AppError("Post not found", 404);
     }
+
     if (post.authorId !== postData.authorId) {
       throw new AppError("Not authorized to delete this post", 403);
     }

@@ -5,45 +5,47 @@ import { AuthController } from "../controller/auth.controller.js";
 import {
   forgotPasswordSchema,
   loginUserSchema,
-  logoutSchema,
-  refreshTokenSchema,
   registerUserSchema,
   resetPasswordSchema,
-  validateTokenSchema,
 } from "../validators/auth.validators.js";
+import { authenticate, apiRateLimiter } from "../middleware/index.js";
 
 const router = Router();
 const authService = new AuthService();
 const authController = new AuthController(authService);
 
-router.post("/register", validate(registerUserSchema), authController.register);
-
-router.post("/login", validate(loginUserSchema), authController.login);
-
 router.post(
-  "/refresh",
-  validate(refreshTokenSchema),
-  authController.refreshToken
+  "/register",
+  apiRateLimiter(5),
+  validate(registerUserSchema),
+  authController.register
 );
 
-router.post("/logout", validate(logoutSchema), authController.logout);
-
-router.get(
-  "/validate",
-  validate(validateTokenSchema),
-  authController.validateToken
+router.post(
+  "/login",
+  apiRateLimiter(),
+  validate(loginUserSchema),
+  authController.login
 );
 
 router.post(
   "/forgot-password",
+  apiRateLimiter(5),
   validate(forgotPasswordSchema),
   authController.forgotPassword
 );
 
 router.post(
   "/reset-password",
+  apiRateLimiter(5),
   validate(resetPasswordSchema),
   authController.resetPassword
 );
+
+router.post("/refresh", apiRateLimiter(3), authController.refreshToken);
+
+router.post("/logout", apiRateLimiter(5), authenticate, authController.logout);
+
+router.get("/validate", apiRateLimiter(3), authController.validateToken);
 
 export default router;

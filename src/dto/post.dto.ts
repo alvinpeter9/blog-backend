@@ -5,7 +5,18 @@ import {
   getAllPostsSchema,
   postUUIDSchema,
   updatePostSchema,
-} from "../validators/post.validator.js";
+} from "../validators/post.validators.js";
+
+export type Post = {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  categoryId: string;
+  published: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 type Author = {
   id: string;

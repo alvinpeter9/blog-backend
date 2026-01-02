@@ -5,6 +5,7 @@ import {
   RegisterUserRequestDto,
 } from "../dto/auth.dto.js";
 import { logger } from "../utils/logger.js";
+import { config } from "../config/index.js";
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -12,13 +13,17 @@ export class AuthController {
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const dto: RegisterUserRequestDto = req.body;
-      const result = await this.authService.register(dto);
+      const { user, accessToken, refreshToken } =
+        await this.authService.register(dto);
 
       logger.info("User registered successfully", { email: dto.email });
 
+      this.setTokenCookie(res, refreshToken, "refresh");
+      this.setTokenCookie(res, accessToken, "access");
+
       res.status(201).json({
         success: true,
-        data: result,
+        user,
       });
     } catch (error) {
       next(error);
@@ -28,13 +33,18 @@ export class AuthController {
   login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const dto: LoginUserRequestDto = req.body;
-      const result = await this.authService.login(dto);
+      const { user, accessToken, refreshToken } = await this.authService.login(
+        dto
+      );
 
       logger.info("User logged in", { email: dto.email });
 
+      this.setTokenCookie(res, refreshToken, "refresh");
+      this.setTokenCookie(res, accessToken, "access");
+
       res.json({
         success: true,
-        data: result,
+        user,
       });
     } catch (error) {
       next(error);
@@ -43,13 +53,17 @@ export class AuthController {
 
   refreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies?.refreshToken as string;
 
-      const result = await this.authService.refreshToken(refreshToken);
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.authService.refreshToken(refreshToken);
+
+      this.setTokenCookie(res, accessToken, "access");
+      this.setTokenCookie(res, newRefreshToken, "refresh");
 
       res.json({
         success: true,
-        data: result,
+        message: "Token refreshed successfully",
       });
     } catch (error) {
       next(error);
@@ -58,8 +72,10 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies?.refreshToken as string;
       await this.authService.logout(refreshToken);
+
+      this.clearTokenCookie(res);
 
       res.json({
         success: true,
@@ -72,15 +88,16 @@ export class AuthController {
 
   validateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { token } = req.body;
+      const token = req.cookies?.accessToken as string;
       const payload = await this.authService.validateToken(token);
 
-      return res.json({
+      res.json({
         success: true,
         data: payload,
       });
     } catch (error) {
-      return next(error);
+      this.clearTokenCookie(res);
+      next(error);
     }
   };
 
@@ -110,26 +127,33 @@ export class AuthController {
     }
   };
 
-  // private setRefreshTokenCookie(res: Response, refreshToken: string) {
-  //   const isProduction = config.ENV === "production";
+  private setTokenCookie(
+    res: Response,
+    token: string,
+    tokenType: "access" | "refresh"
+  ) {
+    const isProduction = config.ENV === "production";
+    const isAccessToken = tokenType === "access";
 
-  //   res.cookie("refreshToken", refreshToken, {
-  //     httpOnly: true,
-  //     secure: isProduction, // Only sent over HTTPS in production
-  //     sameSite: "strict",
-  //     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  //     path: "/", // Available on all routes
-  //     domain: "localhost", // Your domain
-  //   });
-  // }
+    res.cookie(isAccessToken ? "accessToken" : "refreshToken", token, {
+      httpOnly: true,
+      secure: isProduction, // Only sent over HTTPS in production
+      sameSite: "strict",
+      maxAge: isAccessToken
+        ? 15 * 60 * 1000 // 15 minutes
+        : 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/", // Available on all routes
+    });
+  }
 
-  // private clearRefreshTokenCookie(res: Response) {
-  //   res.clearCookie("refreshToken", {
-  //     httpOnly: true,
-  //     secure: config.ENV === "production",
-  //     sameSite: "strict",
-  //     path: "/",
-  //     domain: "localhost",
-  //   });
-  // }
+  private clearTokenCookie(res: Response) {
+    const options = {
+      httpOnly: true,
+      secure: config.ENV === "production",
+      sameSite: "strict" as const,
+      path: "/",
+    };
+    res.clearCookie("refreshToken", options);
+    res.clearCookie("accessToken", options);
+  }
 }

@@ -1,29 +1,27 @@
 import express from "express";
-import authRoutes from "./routes/auth.route.js";
-import userRoutes from "./routes/user.route.js";
-import postRoutes from "./routes/post.route.js";
-import healthRoutes from "./routes/health.route.js";
 import { logger } from "./utils/logger.js";
 import { config } from "./config/index.js";
 import { prisma } from "./config/database.js";
 import { errorHandler } from "./middleware/error-handler.js";
-import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
+import {
+  healthRoutes,
+  authRoutes,
+  categoryRoutes,
+  commentRoutes,
+  postRoutes,
+  userRoutes,
+} from "./routes/index.js";
 
-const app = express();
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: "draft-8", // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-  ipv6Subnet: 56, // Set to 60 or 64 to be less aggressive, or 52 or 48 to be more aggressive
-});
-
-// Apply the rate limiting middleware to all requests.
-app.use(limiter);
+export const app = express();
+app.set("trust proxy", 1); // For load balancers, proxies, etc.
 
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Middleware
+app.use(cookieParser());
 
 // Request logging
 app.use((req, _res, next) => {
@@ -39,10 +37,12 @@ app.get("/", async (_req, res) => {
 });
 
 // ROUTES
-app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
-app.use("/posts", postRoutes);
-app.use("/health", healthRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/health", healthRoutes);
 
 // Error handling
 app.use(errorHandler);

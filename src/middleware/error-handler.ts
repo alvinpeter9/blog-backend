@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { AppError } from "../utils/app-error.js";
 import { logger } from "../utils/logger.js";
 import { config } from "../config/index.js";
@@ -6,8 +6,7 @@ import { config } from "../config/index.js";
 export const errorHandler = (
   err: Error | AppError,
   req: Request,
-  res: Response,
-  _next: NextFunction
+  res: Response
 ) => {
   let statusCode = 500;
   let message = "Internal server error";

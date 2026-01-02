@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../config/database.js";
 import { redis } from "../config/redis.js";
+import { apiRateLimiter } from "../middleware/index.js";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/", async (_req, res) => {
   });
 });
 
-router.get("/ready", async (_, res) => {
+router.get("/ready", apiRateLimiter(30), async (_, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     await redis.ping();
@@ -23,7 +24,7 @@ router.get("/ready", async (_, res) => {
       redis: "connected",
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch {
     res.status(503).json({
       success: false,
       database: "disconnected",

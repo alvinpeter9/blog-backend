@@ -8,7 +8,9 @@ import {
   getAllPostsSchema,
   postIDSchema,
   updatePostSchema,
-} from "../validators/post.validator.js";
+} from "../validators/post.validators.js";
+import { authenticate, apiRateLimiter } from "../middleware/index.js";
+import { categoryIDSchema } from "../validators/category.validators.js";
 
 const router = Router();
 const postService = new PostService();
@@ -20,24 +22,40 @@ router.get(
   postController.getAllPosts
 );
 
-router.post("/", validate(createPostSchema), postController.createPost); // create new post
-
 router.get(
   "/:postId",
   validate(postIDSchema, "params"),
   postController.getPostById
 );
 
+router.get(
+  "/category/:categoryId",
+  validate(categoryIDSchema, "params"),
+  postController.getPostsByCategoryId
+);
+
+router.post(
+  "/",
+  apiRateLimiter(30),
+  authenticate,
+  validate(createPostSchema),
+  postController.createPost
+);
+
 router.put(
   "/:postId",
+  apiRateLimiter(30),
+  authenticate,
   validate(postIDSchema, "params"),
-  validate(updatePostSchema.omit({ postId: true })),
+  validate(updatePostSchema.omit({ postId: true, authorId: true })),
   postController.updatePost
 );
 
 router.delete(
   "/:postId",
-  validate(deletePostSchema),
+  apiRateLimiter(20),
+  authenticate,
+  validate(deletePostSchema.omit({ authorId: true })),
   postController.deletePost
 );
 
